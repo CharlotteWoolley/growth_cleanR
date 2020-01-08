@@ -166,6 +166,19 @@
   add_1000$induced_min_1000_errors <- TRUE
   error_data <- full_join(error_data,add_1000) 
 
+<<<<<<< HEAD
+#Induce metric errors
+  convert_to_metric <- split_error_data$`9`
+  convert_to_metric$weight <- convert_to_metric$original_weight*0.45359237
+  convert_to_metric$induced_imperial_errors <- TRUE
+  error_data <- full_join(error_data,convert_to_metric) 
+
+#Induce imperial errors
+  convert_to_imperial <- split_error_data$`10`
+  convert_to_imperial$weight <- convert_to_imperial$original_weight*2.2046226218
+  convert_to_imperial$induced_metric_errors <- TRUE
+  error_data <- full_join(error_data,convert_to_imperial)  
+=======
 #Induce kg errors
   convert_to_kgs <- split_error_data$`9`
   convert_to_kgs$weight <- convert_to_kgs$original_weight*0.45359237
@@ -177,6 +190,7 @@
   convert_to_lbs$weight <- convert_to_lbs$original_weight*2.2046226218
   convert_to_lbs$induced_kg_errors <- TRUE
   error_data <- full_join(error_data,convert_to_lbs)  
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 
 #Induce transformation errors
 #cpp function that transforms numbers (changes the order of 2 digits e.g 26 to 62)

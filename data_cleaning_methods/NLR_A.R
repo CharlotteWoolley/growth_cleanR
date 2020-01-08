@@ -13,6 +13,135 @@
 #been run in the console. This is useful for workflows such as this where multiple files
 #are linked together and rely on eachother to work effectively
   
+<<<<<<< HEAD
+  #MAKING AN APPOPRIATE NLR MODEL (ONLY DO THIS IF NOT ALREADY LOADED AS TAKES TIME)
+  
+  #Run the GCO method on the data first, to obtain a cleaner subset of the data
+  #on which to run the model
+  if(exists('fem_mod') == FALSE & exists('mal_mod') == FALSE) {
+    
+    #Run the GCO method on the data first, to obtain a cleaner subset of the data
+    #on which to run the model
+    if(exists('master_GCO') == FALSE) {
+      replay(evaluate(file('../data_cleaning_methods/GCO.R')))
+    }
+    
+    subs <- master_GCO %>%
+      mutate(ind_ID = as.factor(ind_ID),
+             sex = as.factor(sex))
+    
+    #using the starting values, fit non-linear regression model to each sex
+    #of the subset of data (with duplicates and general cut off outliers removed)
+    
+    females <- subset(subs, subs$sex == 'Female')
+    fem_mod <- nls(f1,
+                   data = females,
+                   start = c(Asym = fem_start[[1]], lag_time = fem_start[[2]],
+                             growth_rate = fem_start[[3]]))
+    
+    fem_mod_pars <- fem_mod$m$getPars()  
+    
+    males <- subset(subs, subs$sex == 'Male')
+    mal_mod <- nls(f1,
+                   data = males,
+                   start = c(Asym = mal_start[[1]], lag_time = mal_start[[2]], 
+                             growth_rate = mal_start[[3]]))
+    
+    mal_mod_pars <- mal_mod$m$getPars()
+    
+  }
+  
+#APPLYING NLR MODEL TO THE DATA  
+   
+  #Get uncleaned data
+  if(exists('master_DNC') == FALSE) {
+    replay(evaluate(file('../data_cleaning_methods/DNC.R')))
+  }
+  
+  NLR <- master_DNC
+  
+  #Apply these NLR models to the uncleaned data  for each sex and calculate prediction intervals that are 4
+  #times the standard deviation from the predicted measurement
+  females2 <- subset(NLR, NLR$sex == 'Female')
+  
+  females2 <- females2 %>%
+    mutate(predicted_measurement=predict(fem_mod, newdata = females2),
+           sd_pred = sd(predicted_measurement),
+           upper_int = predicted_measurement + (model_var_cutoff*(sd(predicted_measurement))),
+           lower_int = predicted_measurement - (model_var_cutoff*(sd(predicted_measurement))))      
+  
+  males2 <- subset(NLR, NLR$sex == 'Male')
+  
+  males2 <- males2 %>%
+    mutate(predicted_measurement=predict(mal_mod, newdata = males2),
+           sd_pred = sd(predicted_measurement),
+           upper_int = predicted_measurement + (model_var_cutoff*(sd(predicted_measurement))),
+           lower_int = predicted_measurement - (model_var_cutoff*(sd(predicted_measurement)))) 
+  
+  NLR <- rbind(males2, females2)
+  
+  #get_outliers is a function that finds possible outliers in the data by identifying values that
+  #are ouside the upper and lower prediction intervals given by the model and then 
+  #saves the outcome of this logic to a new variable in the dataframe that is named
+  #after the type of outlier being tested
+  get_outliers <- function(X, var1 = "new_weight", upper_limit = "upper_int", 
+                           lower_limit = "lower_int", outlier_name = "outlier", print_results = TRUE) {
+    X[[paste(var1, "_", outlier_name, sep = "")]] <- X[[var1]] > X[[upper_limit]] | X[[var1]] < X[[lower_limit]]
+    if(print_results == TRUE) {
+      print(paste(var1, " ", outlier_name, "s", sep = ""))
+      print(sum(X[[paste(var1, "_", outlier_name, sep = "")]]), na.rm = TRUE)
+    }
+    return(X)
+  }
+  
+  #check the duplications and outliers
+  NLR <- get_duplications(NLR)
+  NLR <- get_outliers(NLR)
+
+  
+  #find the first and last observation in each group of duplicates
+  NLR <- NLR %>%
+    group_by(dups_ID) %>%
+    mutate(observation = row_number(),
+           last_obs_num = tail(observation, 1),
+           first_obs_num = head(observation, 1),
+           last_observation = last_obs_num == observation,
+           first_observation = first_obs_num == observation) %>%
+    ungroup() %>%
+    select(-c(last_obs_num, first_obs_num))
+  
+  #Apply step 1 of algorithm to delete complete duplicates, keeping just the oldest
+  #duplicate in the set of data entries    
+  
+  dat1 <- NLR %>%
+    filter(complete_duplications == FALSE | complete_duplications == TRUE & first_observation == TRUE)
+  
+  #check the difference in duplications
+  dat1 <- get_duplications(dat1)
+  
+  #Apply step 2 of algorithm to delete duplicates that are not complete duplicates
+  #by keeping only the duplicate that is closest to the predicted measurement     
+  
+  #Work out which of the remaining duplicates are closest to the predicted measurements   
+  dat2 <- dat1 %>%
+    mutate(abs_diff_from_pred = abs(new_weight - predicted_measurement)) %>%
+    group_by(dups_ID) %>%
+    mutate(min_diff = min(abs_diff_from_pred)) %>%
+    ungroup() %>%
+    mutate(smallest_diff_from_pred = case_when(min_diff == abs_diff_from_pred ~ TRUE,
+                                               min_diff != abs_diff_from_pred ~ FALSE))
+  
+  dat2 <- dat2 %>%
+    filter(duplications == FALSE | duplications == TRUE & smallest_diff_from_pred == TRUE)
+  
+  #check the difference in duplications
+  dat2 <- get_duplications(dat2)
+  dat2 <- get_outliers(dat2)
+  
+  #Apply step 3 of algorithm to identify the cause of possible errors in dataset
+  
+  #Function to transpose numbers  
+=======
 #Run the NLR method on the data first to perform the first 2 steps of the algorithm
 #(just removing the duplications)
   if(exists('master_NLR') == FALSE) {
@@ -22,6 +151,7 @@
 #Apply step 3 of algorithm to identify the cause of possible errors in dataset
   
 #Function to transpose numbers  
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   cppFunction('IntegerVector Reverse_CPP2(IntegerVector x) {
               int n = x.size();
               IntegerVector out(n);
@@ -40,12 +170,17 @@
               return out;
               
               }')
+<<<<<<< HEAD
+  
+  dat3 <- dat2 %>%
+=======
    
 #list of numbers that should not be transposed due to their difference with the
 #original number being too small (9 in this case)
   bad_numbers <- c(12,21,23,32,34,43,45,54,56,65,67,76,78,87,89,98)
   
   dat3 <- NLR %>%
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     mutate(div10_weights = new_weight/10,
            mul10_weights = new_weight*10,
            div100_weights = new_weight/100,
@@ -56,12 +191,32 @@
            min1000_weights = new_weight - 1000, 
            add100_weights = new_weight + 100, 
            add1000_weights = new_weight + 1000, 
+<<<<<<< HEAD
+           metric_weights = round(as.numeric(weight*metric_conv), 2),
+           imperial_weights = round(as.numeric(weight*imperial_conv), 2),
+=======
            kg_weights = round(as.numeric(weight*0.45359237), 2),
            lbs_weights = round(as.numeric(weight*2.2046226218), 2),
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
            weight_floored = floor(weight),
            reversed_weights1 = as.numeric(Reverse_CPP2(weight_floored)),
            reversed_weights = case_when(weight_floored %in% bad_numbers == TRUE ~ Inf,
                                         weight_floored %in% bad_numbers == FALSE ~ reversed_weights1 + (weight %% 1)),
+<<<<<<< HEAD
+           div10_weights_diff = abs(div10_weights - predicted_measurement),
+           mul10_weights_diff = abs(mul10_weights - predicted_measurement),
+           div100_weights_diff = abs(div100_weights - predicted_measurement),
+           mul100_weights_diff = abs(mul100_weights - predicted_measurement),
+           div1000_weights_diff = abs(div1000_weights - predicted_measurement),
+           mul1000_weights_diff = abs(mul1000_weights - predicted_measurement),
+           min100_weights_diff = abs(min100_weights - predicted_measurement),
+           min1000_weights_diff = abs(min1000_weights - predicted_measurement),
+           add100_weights_diff = abs(add100_weights - predicted_measurement),
+           add1000_weights_diff = abs(add1000_weights - predicted_measurement),
+           metric_weights_diff = abs(metric_weights - predicted_measurement),
+           imperial_weights_diff = abs(imperial_weights - predicted_measurement),
+           reversed_weights_diff = abs(reversed_weights - predicted_measurement)) %>%
+=======
            div10_weights_diff = abs(div10_weights - NLR_pred),
            mul10_weights_diff = abs(mul10_weights - NLR_pred),
            div100_weights_diff = abs(div100_weights - NLR_pred),
@@ -75,12 +230,17 @@
            kg_weights_diff = abs(kg_weights - NLR_pred),
            lbs_weights_diff = abs(lbs_weights - NLR_pred),
            reversed_weights_diff = abs(reversed_weights - NLR_pred)) %>%
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     transform(smallest_diff = pmin((div10_weights_diff),
                                    (mul10_weights_diff), (div100_weights_diff),
                                    (mul100_weights_diff), (div1000_weights_diff),
                                    (mul1000_weights_diff), (min100_weights_diff), (min1000_weights_diff),
                                    (add100_weights_diff), (add1000_weights_diff),
+<<<<<<< HEAD
+                                   (metric_weights_diff), (imperial_weights_diff),
+=======
                                    (kg_weights_diff), (lbs_weights_diff),
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
                                    reversed_weights_diff)) %>%
     mutate(div10_smallest_diff = (div10_weights_diff) == smallest_diff,
            mul10_smallest_diff = (mul10_weights_diff) == smallest_diff,
@@ -92,10 +252,16 @@
            min1000_smallest_diff = (min1000_weights_diff) == smallest_diff,
            add100_smallest_diff = (add100_weights_diff) == smallest_diff,
            add1000_smallest_diff = (add1000_weights_diff) == smallest_diff,
+<<<<<<< HEAD
+           metric_smallest_diff = (metric_weights_diff) == smallest_diff,
+           imperial_smallest_diff = (imperial_weights_diff) == smallest_diff,
+           reversed_smallest_diff = (reversed_weights_diff) == smallest_diff)
+=======
            kg_smallest_diff = (kg_weights_diff) == smallest_diff,
            lbs_smallest_diff = (lbs_weights_diff) == smallest_diff,
            reversed_smallest_diff = (reversed_weights_diff) == smallest_diff)
   
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   #function that replaces outliers with the correction that reults in the 
   #smallest difference from the predicted measurement
   
@@ -118,6 +284,18 @@
   #are ouside the upper and lower prediction intervals given by the model and then 
   #saves the outcome of this logic to a new variable in the dataframe that is named
   #after the type of outlier being tested
+<<<<<<< HEAD
+  get_outliers <- function(X, var1 = "new_weight", upper_limit = "upper_int", 
+                           lower_limit = "lower_int", outlier_name = "outlier", print_results = TRUE) {
+    X[[paste(var1, "_", outlier_name, sep = "")]] <- X[[var1]] > X[[upper_limit]] | X[[var1]] < X[[lower_limit]]
+    if(print_results == TRUE) {
+      print(paste(var1, " ", outlier_name, "s", sep = ""))
+      print(sum(X[[paste(var1, "_", outlier_name, sep = "")]]), na.rm = TRUE)
+    }
+    return(X)
+  }
+=======
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   
   #get the outliers for each possible correction
   dat3 <- get_outliers(dat3)
@@ -127,8 +305,13 @@
   dat3 <- get_outliers(dat3, var1 = "mul100_weights")
   dat3 <- get_outliers(dat3, var1 = "div1000_weights")
   dat3 <- get_outliers(dat3, var1 = "mul1000_weights")
+<<<<<<< HEAD
+  dat3 <- get_outliers(dat3, var1 = "metric_weights")
+  dat3 <- get_outliers(dat3, var1 = "imperial_weights")
+=======
   dat3 <- get_outliers(dat3, var1 = "kg_weights")
   dat3 <- get_outliers(dat3, var1 = "lbs_weights")
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   dat3 <- get_outliers(dat3, var1 = "reversed_weights")
   dat3 <- get_outliers(dat3, var1 = "min100_weights")
   dat3 <- get_outliers(dat3, var1 = "min1000_weights")
@@ -147,6 +330,17 @@
   dat3 <- replace_outliers(dat3, "new_weight", "min1000")
   dat3 <- replace_outliers(dat3, "new_weight", "add100")
   dat3 <- replace_outliers(dat3, "new_weight", "add1000")
+<<<<<<< HEAD
+  dat3 <- replace_outliers(dat3, "new_weight", "metric")
+  dat3 <- replace_outliers(dat3, "new_weight", "imperial")  
+  dat4 <- replace_outliers(dat3, "new_weight", "reversed")  
+  
+  #Apply step 4 of algorithm to identify consecutive values that jump in size
+  
+  #Function that identifies consecutive values that jump in size more than
+  #the maximum predicted amount that they could change
+  
+=======
   dat3 <- replace_outliers(dat3, "new_weight", "kg")
   dat3 <- replace_outliers(dat3, "new_weight", "lbs")  
   dat4 <- replace_outliers(dat3, "new_weight", "reversed")  
@@ -156,6 +350,7 @@
   #Function that identifies consecutive values that jump in size more than
   #the maximum predicted amount that they could change
 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   get_jumpers <- function(X) {
     X <- X %>%
       group_by(ind_ID) %>%
@@ -187,6 +382,17 @@
   dat4 <- get_duplications(dat4)
   dat4 <- get_outliers(dat4) 
   
+<<<<<<< HEAD
+  #Apply step 5 of algorithm to remove any remaining implausible values 
+  
+  dat4 <- algo_cutoffs(dat4)
+  
+  
+  #remove values defined as outliers  
+  master_NLR_A <- dat4 %>%
+    filter(general_outlier == FALSE)
+  
+=======
 #Apply step 5 of algorithm to remove any remaining implausible values 
 
   #define the externally defined cut-offs for weight that are used to identify outliers
@@ -198,3 +404,4 @@
 
   
   
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
