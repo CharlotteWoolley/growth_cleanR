@@ -13,6 +13,22 @@
 #replay(evaluate) runs the code within a file and returnes the output as if it had
 #been run in the console. This is useful for workflows such as this where multiple files
 #are linked together and rely on eachother to work effectively
+<<<<<<< HEAD
+
+  #MAKING AN APPROPRIATE NLME MODEL
+  
+  #Run the NLR method on the data first, to obtain a cleaner subset of the data
+  #on which to run the model, then remove general outliers
+
+  if(exists('master_NLR_A') == FALSE) {
+  replay(evaluate(file('../data_cleaning_methods/NLR_A.R')))
+  }
+  
+  subs <- get_outliers(dat2) %>%
+    mutate(ind_ID = as.factor(ind_ID),
+           sex = as.factor(sex)) %>%
+    filter(new_weight_outlier == FALSE)
+=======
   
 #Run the NLR method on the data first, to obtain a cleaner subset of the data
 #on which to run the model
@@ -26,6 +42,7 @@
            sex = as.factor(sex))
   
   NLME <- master_DNC
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 
 #set up starting values based on NLR model and run the NLME model  
   start_values <- c(as.numeric(fem_mod_pars[1]),as.numeric(mal_mod_pars[1]),
@@ -33,7 +50,11 @@
                     as.numeric(fem_mod_pars[3]),as.numeric(mal_mod_pars[3]))
   
   mixd <- nlme(f1,
+<<<<<<< HEAD
+               data = subs,
+=======
                data = sub_dat,
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
                fixed = list(Asym + lag_time + growth_rate ~ 1 + sex),
                random = pdDiag(Asym + lag_time + growth_rate ~ 1),
                groups = ~ ind_ID,
@@ -79,15 +100,24 @@
   
   
 #get the appropriate intervals from the new data
+<<<<<<< HEAD
+  subs <- subs %>%
+    mutate(bins = cut(subs$age, breaks = intervals, include.lowest = TRUE),
+=======
   sub_dat <- sub_dat %>%
     mutate(bins = cut(sub_dat$age, breaks = intervals, include.lowest = TRUE),
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
            bins2 = gsub("\\[|\\]|\\(|\\)", "", bins)) %>%
     separate(bins2, c("lower_bin", "upper_bin"), ",") %>%
     mutate(middle_age = (as.numeric(lower_bin)+as.numeric(upper_bin))/2)
 
 
 #get variation for prediction intervals
+<<<<<<< HEAD
+  grid_mod_variation <- subs %>%
+=======
   grid_mod_variation <- sub_dat %>%
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     mutate(ind_ID = factor(ind_ID)) %>%
     data_grid(ind_ID = unique(ind_ID),
               age = unique(middle_age),
@@ -100,7 +130,11 @@
     ungroup() %>%
     select(bins,middle_age,sex,sd_pred_RE) 
   
+<<<<<<< HEAD
+  grid_resid_variation <- as.tbl(subs) %>%
+=======
   grid_resid_variation <- as.tbl(sub_dat) %>%
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     mutate(pred_RE = predict(mixd, newdata = ., level = 1),
            residuals = pred_RE - weight) %>%
     group_by(middle_age, bins, sex) %>%
@@ -139,20 +173,46 @@
   female_smoothed <- predict(female_loess)
   females2 <- females2 %>%
     mutate(smoothed_sd_residuals = female_smoothed)
+<<<<<<< HEAD
+  
+=======
 
 #add prediction intervals to original data
 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   grid_merged <- grid_mod_variation %>% 
     full_join(rbind(females2,males2)) %>%
     mutate(total_variation = sd_pred_RE + smoothed_sd_residuals) %>%
     select(bins,middle_age,sex,sd_pred_RE,sd_residuals,smoothed_sd_residuals,total_variation)
 
+<<<<<<< HEAD
+  #APPLYING NLME MODEL TO THE DATA  
+  
+  #Run the DNC method on the data first
+  if(exists('master_DNC') == FALSE) {
+    replay(evaluate(file('../data_cleaning_methods/DNC.R')))
+  }
+  
+  NLME <- master_DNC 
+
+  #add prediction intervals to the uncleaned data (with duplicates removed)
+=======
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 
   NLME <- NLME %>%
     mutate(bins = cut(age, breaks = intervals, include.lowest = TRUE)) %>%
     full_join(grid_merged, by = c("bins", "sex")) %>%
     mutate(random_effects = predict(mixd, newdata = NLME, level = 1),
            fixed_effects = predict(mixd, newdata = NLME, level = 0),
+<<<<<<< HEAD
+           predicted_measurement = case_when(!is.na(random_effects) & num_data_entries > 1 ~ random_effects,
+                                    !is.na(random_effects) & num_data_entries < 2 ~ fixed_effects,
+                                    is.na(random_effects) ~ fixed_effects),
+           upper_rand = predicted_measurement + (model_var_cutoff*smoothed_sd_residuals),
+           lower_rand = predicted_measurement - (model_var_cutoff*smoothed_sd_residuals),
+           upper_fixd = predicted_measurement + (model_var_cutoff*total_variation),
+           lower_fixd = predicted_measurement - (model_var_cutoff*total_variation),
+=======
            both_effects = case_when(!is.na(random_effects) & num_data_entries > 1 ~ random_effects,
                                     !is.na(random_effects) & num_data_entries < 2 ~ fixed_effects,
                                     is.na(random_effects) ~ fixed_effects),
@@ -160,6 +220,7 @@
            lower_rand = both_effects - (model_var_cutoff*smoothed_sd_residuals),
            upper_fixd = both_effects + (model_var_cutoff*total_variation),
            lower_fixd = both_effects - (model_var_cutoff*total_variation),
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
            upper_int = case_when(!is.na(random_effects) & num_data_entries > 1 ~ upper_rand,
                              !is.na(random_effects) & num_data_entries < 2 ~ upper_fixd,
                              is.na(random_effects) ~ upper_fixd),
@@ -172,6 +233,24 @@
   #are ouside the upper and lower prediction intervals given by the model and then 
   #saves the outcome of this logic to a new variable in the dataframe that is named
   #after the type of outlier being tested
+<<<<<<< HEAD
+  get_outliers <- function(X, var1 = "new_weight", upper_limit = "upper_int", 
+                           lower_limit = "lower_int", outlier_name = "outlier", print_results = TRUE) {
+    X[[paste(var1, "_", outlier_name, sep = "")]] <- X[[var1]] > X[[upper_limit]] | X[[var1]] < X[[lower_limit]]
+    if(print_results == TRUE) {
+      print(paste(var1, " ", outlier_name, "s", sep = ""))
+      print(sum(X[[paste(var1, "_", outlier_name, sep = "")]]), na.rm = TRUE)
+    }
+    return(X)
+  }
+  
+  #check the duplications and outliers
+  NLME <- get_duplications(NLME)
+  NLME <- get_outliers(NLME)
+  
+  
+  #find the first and last observation in each group of duplicates
+=======
   
   NLME <- get_outliers(NLME, print_results = TRUE)
 
@@ -180,6 +259,7 @@
    
   NLME <- get_duplications(NLME)
   
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   NLME <- NLME %>%
     group_by(dups_ID) %>%
     mutate(observation = row_number(),
@@ -187,6 +267,19 @@
            first_obs_num = head(observation, 1),
            last_observation = last_obs_num == observation,
            first_observation = first_obs_num == observation) %>%
+<<<<<<< HEAD
+    ungroup() %>%
+    select(-c(last_obs_num, first_obs_num))
+  
+  #Remove duplications by keeping the last (most recent) observation
+  NLME <- NLME %>%
+    filter(duplications == FALSE | duplications == TRUE & last_observation == TRUE)
+  
+  #check for any remaining duplications
+  NLME <- get_duplications(NLME)
+  
+  #cut out remaining outliers identified by the prediction intervals to clean the data
+=======
     ungroup()
   
   NLME <- NLME %>%
@@ -215,6 +308,7 @@
   NLME <- get_outliers(NLME)
   
 #cut out remaining outliers identified by the prediction intervals to clean the data
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
   master_NLME <- NLME %>%
     filter(new_weight_outlier == FALSE)
   

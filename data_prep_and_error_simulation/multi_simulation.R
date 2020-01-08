@@ -101,10 +101,23 @@
     get_progress()
     replay(evaluate(file('../data_cleaning_methods/GCO.R')))
     get_progress()
+<<<<<<< HEAD
+    replay(evaluate(file('../data_cleaning_methods/GCO_A.R')))
+    get_progress()
+    replay(evaluate(file('../data_cleaning_methods/SZCO.R')))
+    get_progress()
+    replay(evaluate(file('../data_cleaning_methods/SZCO_A.R')))
+    get_progress()
+    replay(evaluate(file('../data_cleaning_methods/LZCO.R')))
+    get_progress()
+    replay(evaluate(file('../data_cleaning_methods/LZCO_A.R')))
+    get_progress()
+=======
     replay(evaluate(file('../data_cleaning_methods/SZCO.R')))
     get_progress()
     replay(evaluate(file('../data_cleaning_methods/LZCO.R')))
     get_progress()
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     replay(evaluate(file('../data_cleaning_methods/NLR.R')))
     get_progress()
     
@@ -147,8 +160,16 @@
     master_DNC_res <- get_se_and_sp(master_DNC, "DNC")
     master_RD_res <- get_se_and_sp(master_RD, "RD")
     master_GCO_res <- get_se_and_sp(master_GCO, "GCO")
+<<<<<<< HEAD
+    master_GCO_A_res <- get_se_and_sp(master_GCO_A, "GCO_A")
+    master_SZCO_res <- get_se_and_sp(master_SZCO, "SZCO")
+    master_SZCO_A_res <- get_se_and_sp(master_SZCO_A, "SZCO_A")
+    master_LZCO_res <- get_se_and_sp(master_LZCO, "LZCO")
+    master_LZCO_A_res <- get_se_and_sp(master_LZCO_A, "LZCO_A")
+=======
     master_SZCO_res <- get_se_and_sp(master_SZCO, "SZCO")
     master_LZCO_res <- get_se_and_sp(master_LZCO, "LZCO")
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     
     if(NLR_converge_fail == FALSE) {  
       master_NLR_res <- get_se_and_sp(master_NLR, "NLR")
@@ -171,8 +192,13 @@
     }
     
     #Put all results in a dataframe
+<<<<<<< HEAD
+    all_results <- cbind(master_DNC_res, master_RD_res, master_GCO_res,master_GCO_A_res, master_SZCO_res, master_SZCO_A_res, 
+                         master_LZCO_res, master_LZCO_A_res, master_NLR_res, master_NLR_A_res, master_NLME_res, master_NLME_A_res) 
+=======
     all_results <- cbind(master_DNC_res, master_RD_res, master_GCO_res, master_SZCO_res, 
                          master_LZCO_res, master_NLR_res, master_NLR_A_res, master_NLME_res, master_NLME_A_res) 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     
     #Run progress report final time
     get_progress()
@@ -192,7 +218,11 @@
   replay(evaluate(file('../data_cleaning_methods/setup_file.R')))
   
 #Create a dataframe wth the values of e and r required
+<<<<<<< HEAD
+  df <- expand.grid(e = c(0, 0.001, 0.002, 0.005,0.01,0.02,0.05,0.1,0.2, 0.5), r = c(seq(0, 1, 0.1)))
+=======
   df <- expand.grid(e = c(0.01), r = c(0.5))
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 
 #get start time when fun began iterating over e and r (for progress report)
   start_time <- Sys.time()
@@ -201,6 +231,17 @@
     bind_cols(., pmap_df(., fun))
 
   
+<<<<<<< HEAD
+  #UPDATE GIT
+  system("git checkout update_growth_work")
+  system("git status")		
+  system("git add .")
+  system("git commit -m 'update growth algorithm stuff for paper with multi sim running over weekend'")
+  system("git push")
+  
+  
+=======
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 #Change NaN senstivity results to 100   
 
   #function to deal with NaNs in dataframes
@@ -211,7 +252,11 @@
   methods_results[is.nan(methods_results)] <- 100
     
 #write results to a csv
+<<<<<<< HEAD
+  write_csv(methods_results, '../data/multi_simulation_results3.csv')
+=======
   write_csv(methods_results, '../data/multi_simulation_results.csv')
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 
 
 

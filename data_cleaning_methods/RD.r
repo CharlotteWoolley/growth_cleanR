@@ -18,6 +18,8 @@
   
   master_RD <- master_DNC
   
+<<<<<<< HEAD
+=======
 #Function that identifies duplications in the data and prints the number out
 #Duplications are defined as a data entry for the same individual that was entered on
 #the same day
@@ -40,6 +42,7 @@
     return(X)
   }
 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 #check for any duplications
   master_RD <- get_duplications(master_RD)
   

@@ -12,6 +12,15 @@
 #been run in the console. This is useful for workflows such as this where multiple files
 #are linked together and rely on eachother to work effectively
 
+<<<<<<< HEAD
+  #Run the DNC method on the data first
+  if(exists('master_DNC') == FALSE) {
+    replay(evaluate(file('../data_cleaning_methods/DNC.R')))
+  }
+
+  LZCO <- master_DNC
+ 
+=======
 #Run the RD method on the data first
   if(exists('master_RD') == FALSE) {
   replay(evaluate(file('../data_cleaning_methods/RD.R')))
@@ -19,6 +28,7 @@
 
   master_LZCO <- master_RD
 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
 #For the LZCO method, data is divided into 365 day age periods by sex and the z scores 
 #are calculated with each age/sex group
 #Function that will get appropriate intervals according to the data
@@ -51,6 +61,52 @@
     return(X)
   }
 
+<<<<<<< HEAD
+  #Set initial intervals with the ideal time period required and run the function
+  intervals <- seq(min(dat$age), max(dat$age+age_interval_cutoff), age_interval_cutoff)
+  bin_freq <- get_intervals(dat, intervals, bin_freq_cutoff)
+  
+  #get the appropriate intervals from the new data
+  intervals <- sort(unique(as.numeric(c(min(intervals), as.numeric(bin_freq$lower_bin), max(intervals)))))
+  
+  LZCO <- LZCO %>%
+    mutate(bins = cut(LZCO$age, breaks = intervals, include.lowest = TRUE))
+
+#define the z-scores for weight (by each group) that are used to identify outliers
+#The cut off for z-score is given as more than 3 or less than -3
+  LZCO <- as.tbl(LZCO) 
+  
+  LZCO <- z_score_cutoffs2(LZCO)
+  
+  #check for any duplications
+  LZCO <- get_duplications(LZCO)
+  
+  #find the first and last observation in each group of duplicates
+  LZCO <- LZCO %>%
+    group_by(dups_ID) %>%
+    mutate(observation = row_number(),
+           last_obs_num = tail(observation, 1),
+           first_obs_num = head(observation, 1),
+           last_observation = last_obs_num == observation,
+           first_observation = first_obs_num == observation) %>%
+    ungroup() %>%
+    select(-c(last_obs_num, first_obs_num))
+  
+  #Remove duplications by keeping the last (most recent) observation
+  LZCO <- LZCO %>%
+    filter(duplications == FALSE | duplications == TRUE & last_observation == TRUE)
+  
+  #check for any remaining duplications
+  LZCO <- get_duplications(LZCO)
+
+#cut out outliers to clean the data
+  master_LZCO <- LZCO %>%
+    filter(z_outlier == FALSE)
+
+  
+  
+    
+=======
 #Set initial intervals with the ideal time period required and run the function
     intervals <- seq(min(dat$age), max(dat$age+age_interval_cutoff), age_interval_cutoff)
     bin_freq <- get_intervals(dat, intervals, bin_freq_cutoff)
@@ -75,3 +131,4 @@
   master_LZCO <- master_LZCO %>%
     filter(z_score_outlier_long == FALSE)
   
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192

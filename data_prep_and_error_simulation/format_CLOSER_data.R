@@ -36,13 +36,22 @@
            ind_ID = as.factor(ind_ID),
            sex = as.factor(sex), 
     #create copy of weight variable
+<<<<<<< HEAD
+           new_weight = as.numeric(original_weight),
+    row_ID = row_number()) %>%
+=======
            new_weight = as.numeric(original_weight)) %>%
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
     #find the number of data entries per individual
     group_by(ind_ID) %>%
     mutate(num_data_entries = length(ind_ID)) %>%
     ungroup() %>%
     #select only the variables that are needed for this study
+<<<<<<< HEAD
+    select(ind_ID, row_ID, study_ID, sex, age, age_floored, original_weight, 
+=======
     select(ind_ID, study_ID, sex, age, age_floored, original_weight, 
+>>>>>>> a36da5f7209fd77e8f32b63d5d80b476c72bc192
            new_weight, num_data_entries, unit, measurement_type)
 
 #Save the data in csv format
