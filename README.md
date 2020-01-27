@@ -7,4 +7,4 @@ The code contained in this repository is supplementary material for our publicat
 
 1. Cohort and Longitudinal Studies Enhancement Resources. Harmonised Height, Weight and BMI in Five Longitudinal Cohort Studies: National Child Development Study, 1970 British Cohort Study and Millennium Cohort Study. [data collection]. UK Data Service, 2017 [Accessed 6 December 2018]. Available from: http://doi.org/10.5255/UKDA-SN-8207-1
 
-2. TBC
+2. Woolley CSC, Handel IG, Bronsvoort BM, Schoenebeck JJ, Clements DN (2020) Is it time to stop sweeping data cleaning under the carpet? A novel algorithm for outlier management in growth data. PLoS ONE 15(1): e0228154. https://doi.org/10.1371/journal.pone.0228154
